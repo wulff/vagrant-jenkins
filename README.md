@@ -1,2 +1,3 @@
-vagrant-jenkins
+Vagrant Jenkins
 ===============
+
