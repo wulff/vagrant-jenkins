@@ -13,11 +13,26 @@ class jenkins::requirements {
 }
 
 class jenkins::install {
+  # install git-core and add some useful aliases
+  class { 'git': }
+
+  # install and configure php
+  class { 'jenkins::install::php': }
 
   # virtual framebuffer for running selenium tests using a headless firefox
   package { ['xvfb', 'x11-apps', 'xfonts-100dpi', 'xfonts-75dpi', 'xfonts-scalable', 'xfonts-cyrillic']:
     ensure => present,
   }
+}
+
+class jenkins::install::php {
+  class { 'php': }
+
+  php::module { 'curl': }
+  php::module { 'gd': }
+  php::module { 'sqlite': }
+
+  class { 'php::pear': } -> class { 'php::qatools': }
 }
 
 class jenkins {
