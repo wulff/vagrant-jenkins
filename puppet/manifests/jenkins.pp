@@ -27,9 +27,104 @@ class jenkins::install {
 
   class { 'php::pear': } -> class { 'php::qatools': }
 
+  # install drush
+
+  php::pear::package { 'Console_Table': }
+
+  php::pear::package { 'drush':
+    repository => 'pear.drush.org',
+    version    => latest,
+  }
+
+  # install and configure jenkins
+
+  class { 'jenkins': }
+
+  jenkins::job { 'drupal-template':
+    repository => 'git://github.com/wulff/jenkins-drupal-template.git',
+  }
+  jenkins::job { 'selenium-template':
+    repository => 'git://github.com/wulff/jenkins-selenium-template.git',
+  }
+
+  jenkins::plugin { 'analysis-core': }
+  jenkins::plugin { 'checkstyle': }
+  jenkins::plugin { 'dry': }
+  jenkins::plugin { 'phing': }
+  jenkins::plugin { 'plot': }
+  jenkins::plugin { 'pmd': }
+  jenkins::plugin { 'build-timeout': }
+  jenkins::plugin { 'claim': }
+  jenkins::plugin { 'disk-usage': }
+  jenkins::plugin { 'email-ext': }
+  jenkins::plugin { 'favorite': }
+  jenkins::plugin { 'git': }
+  jenkins::plugin { 'envinject': }
+  jenkins::plugin { 'jobConfigHistory': }
+  jenkins::plugin { 'project-stats-plugin': }
+  jenkins::plugin { 'redmine': }
+  jenkins::plugin { 'seleniumhq': }
+  jenkins::plugin { 'statusmonitor': }
+  jenkins::plugin { 'instant-messaging': }
+  jenkins::plugin { 'jabber': }
+  jenkins::plugin { 'tasks': }
+  jenkins::plugin { 'warnings': }
+  jenkins::plugin { 'greenballs': }
+  jenkins::plugin { 'xvfb': }
+
+  # install postfix to make it possible for jenkins to notify via mail
+
+  package { 'postfix':
+    ensure => present,
+  }
+
+  service { 'postfix':
+    ensure => running,
+    require => Package['postfix'],
+  }
+
+  # install apache and add a proxy for jenkins
+  
+  class { 'apache': }
+  apache::mod { 'php5': }
+  apache::mod { 'rewrite': }
+
+  apache::vhost::proxy { 'jenkins.33.33.33.10.xip.io':
+    priority      => '20',
+    port          => '80',
+    dest          => 'http://localhost:8080',
+  }
+
+  # install mariadb and setup a database for jenkins to use
+
+  apt::source { 'mariadb':
+    location    => 'http://ftp.osuosl.org/pub/mariadb/repo/5.5/ubuntu',
+    release     => 'precise',
+    repos       => 'main',
+    key         => '1BB943DB',
+    include_src => true,
+  } ->
+  class { 'mysql::server':
+    # use the mysql module to install the mariadb packages
+    package_name     => 'mariadb-server',
+    # necessary because /sbin/status doesn't know about mysql on ubuntu
+    service_provider => 'debian',
+  }
+
+  php::module { 'mysqlnd':
+    restart => Service['apache2'],
+  }
+
+  # install selenium, firefox and xvfb for headless testing
+
   # virtual framebuffer for running selenium tests using a headless firefox
   package { ['xvfb', 'x11-apps', 'xfonts-100dpi', 'xfonts-75dpi', 'xfonts-scalable', 'xfonts-cyrillic']:
     ensure => present,
+  }
+
+  package { 'firefox':
+    ensure  => present,
+    require => Package['xvfb'],
   }
 }
 
