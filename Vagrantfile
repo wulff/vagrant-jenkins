@@ -1,5 +1,5 @@
 Vagrant::Config.run do |config|
-  config.vm.name = 'jenkins'
+  config.vm.host_name = 'jenkins'
 
   # the base box this environment is built off of
   config.vm.box = 'precise32'
@@ -13,7 +13,7 @@ Vagrant::Config.run do |config|
   # use puppet to provision packages
   config.vm.provision :puppet do |puppet|
     puppet.manifests_path = 'puppet/manifests'
-    puppet.manifest_file = 'site.pp'
+    puppet.manifest_file = 'jenkins.pp'
     puppet.module_path = 'puppet/modules'
   end
 end
