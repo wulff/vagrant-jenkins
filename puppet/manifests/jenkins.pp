@@ -49,13 +49,24 @@ class jenkins::install {
 
   class { 'php::pear': } -> class { 'php::qatools': }
 
-  # install drush
+  # install drush and the phing command
 
   php::pear::package { 'Console_Table': }
 
   php::pear::package { 'drush':
     repository => 'pear.drush.org',
     version    => latest,
+  }
+
+  file { ['/usr/share/drush', '/usr/share/drush/commands']:
+    ensure => directory,
+  }
+
+  exec { 'dr-drupal-clone-phing':
+    command => 'git clone --branch develop git://github.com/wulff/drush-phing.git phing',
+    cwd     => '/usr/share/drush/commands',
+    creates => '/usr/share/drush/commands/phing/phing.drush.inc',
+    require => File['/usr/share/drush/commands'],
   }
 
   # install and configure jenkins
@@ -84,7 +95,6 @@ class jenkins::install {
   jenkins::plugin { 'envinject': }
   jenkins::plugin { 'jobConfigHistory': }
   jenkins::plugin { 'project-stats-plugin': }
-  jenkins::plugin { 'redmine': }
   jenkins::plugin { 'seleniumhq': }
   jenkins::plugin { 'statusmonitor': }
   jenkins::plugin { 'instant-messaging': }
@@ -118,6 +128,17 @@ class jenkins::install {
     dest => 'http://localhost:8080',
   }
 
+#  apache::vhost { 'drupal.127.0.0.1.xip.io':
+#    priority      => '30',
+#    port          => '80',
+#    docroot       => '/var/lib/jenkins/jobs/drupal-dr-dk/workspace/site',
+#    docroot_user  => 'jenkins',
+#    docroot_group => 'nogroup',
+#    ssl           => false,
+#    serveradmin   => 'root@dr.peytz.dk',
+#    override      => 'All',
+#  }
+
   # install mariadb and setup a database for jenkins to use
 
   class { 'mysql::server':
@@ -131,7 +152,28 @@ class jenkins::install {
     restart => Service['apache2'],
   }
 
+  mysql::db { 'drupal_jenkins':
+    user     => 'drupal',
+    password => 'drupal',
+  }
+
   # install selenium, firefox and xvfb for headless testing
+
+  file { ['/opt/selenium-server', '/usr/local/lib/selenium']:
+    ensure => directory,
+  }
+
+  exec { 'download-selenium':
+    command => 'wget -P /opt/selenium-server http://selenium.googlecode.com/files/selenium-server-standalone-2.25.0.jar',
+    creates => '/opt/selenium-server/selenium-server-standalone-2.25.0.jar',
+    require => File['/opt/selenium-server'],
+  }
+
+  file { '/usr/local/lib/selenium/selenium-server.jar':
+    ensure  => link,
+    target  => '/opt/selenium-server/selenium-server-standalone-2.25.0.jar',
+    require => [File['/usr/local/lib/selenium'], Exec['download-selenium']],
+  }
 
   # virtual framebuffer for running selenium tests using a headless firefox
   package { ['xvfb', 'x11-apps', 'xfonts-100dpi', 'xfonts-75dpi', 'xfonts-scalable', 'xfonts-cyrillic']:
