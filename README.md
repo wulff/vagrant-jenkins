@@ -7,8 +7,9 @@ This Vagrantfile and the included puppet manifests can be used to setup a Jenkin
 Installation
 ------------
 
-1. Clone this repository using the `--recursive` flag (to get the submodules).
-2. Go to the root of the repository and run `vagrant up`.
+1. Download and install Vagrant: http://vagrantup.com/
+2. Clone this repository using the `--recursive` flag (to get the submodules).
+3. Go to the root of the repository and run `vagrant up`.
 
 
 Getting started
