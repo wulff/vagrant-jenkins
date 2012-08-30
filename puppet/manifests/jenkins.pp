@@ -108,13 +108,14 @@ class jenkins::install {
   # install apache and add a proxy for jenkins
 
   class { 'apache': }
+  class { 'apache::mod::proxy': }
+
   apache::mod { 'php5': }
   apache::mod { 'rewrite': }
 
   apache::vhost::proxy { 'jenkins.33.33.33.10.xip.io':
-    priority => '20',
-    port     => '80',
-    dest     => 'http://localhost:8080',
+    port => '80',
+    dest => 'http://localhost:8080',
   }
 
   # install mariadb and setup a database for jenkins to use
