@@ -106,7 +106,7 @@ class jenkins::install {
   }
 
   # install apache and add a proxy for jenkins
-  
+
   class { 'apache': }
   apache::mod { 'php5': }
   apache::mod { 'rewrite': }
