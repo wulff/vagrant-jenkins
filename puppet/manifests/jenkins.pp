@@ -103,6 +103,7 @@ class jenkins::install {
   jenkins::plugin { 'warnings': }
   jenkins::plugin { 'greenballs': }
   jenkins::plugin { 'xvfb': }
+  jenkins::plugin { 'performance': }
 
   # install postfix to make it possible for jenkins to notify via mail
 

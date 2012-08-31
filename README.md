@@ -9,7 +9,7 @@ Installation
 
 1. Download and install Vagrant: http://vagrantup.com/
 2. Clone this repository using the `--recursive` flag (to get the submodules).
-3. Go to the root of the repository and run `vagrant up`.
+3. Go to the root of the repository and run `vagrant up`. Building the virtual machine takes approximately twenty minutes.
 
 
 Getting started
@@ -17,7 +17,7 @@ Getting started
 
 When the virtual machine has booted, you can access the Jenkins instance at the following URL:
 
-    jenkins.33.33.33.10.xip.io
+    http://jenkins.33.33.33.10.xip.io/
 
 
 Author
