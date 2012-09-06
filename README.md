@@ -18,10 +18,3 @@ Getting started
 When the virtual machine has booted, you can access the Jenkins instance at the following URL:
 
     http://jenkins.33.33.33.10.xip.io/
-
-
-Author
-------
-
-Morten Wulff  
-<wulff@ratatosk.net>
