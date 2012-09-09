@@ -19,6 +19,8 @@ class jenkins::requirements {
   # install git-core and add some useful aliases
   class { 'git': }
 
+  package { 'unzip': }
+
   apt::source { 'jenkins':
     location    => 'http://pkg.jenkins-ci.org/debian',
     release     => '',
@@ -62,6 +64,7 @@ class jenkins::install {
     ensure => directory,
   }
 
+  # TODO: remove this, since we're using codesniffer?
   exec { 'dr-drupal-clone-phing':
     command => 'git clone --branch develop git://github.com/wulff/drush-phing.git phing',
     cwd     => '/usr/share/drush/commands',
@@ -79,31 +82,33 @@ class jenkins::install {
   jenkins::job { 'selenium-template':
     repository => 'git://github.com/wulff/jenkins-selenium-template.git',
   }
+  jenkins::job { 'jmeter-template':
+    repository => 'git://github.com/wulff/jenkins-jmeter-template.git',
+  }
 
   jenkins::plugin { 'analysis-core': }
+  jenkins::plugin { 'build-timeout': }
   jenkins::plugin { 'checkstyle': }
+  jenkins::plugin { 'claim': }
+  jenkins::plugin { 'disk-usage': }
   jenkins::plugin { 'dry': }
+  jenkins::plugin { 'email-ext': }
+  jenkins::plugin { 'envinject': }
+  jenkins::plugin { 'favorite': }
+  jenkins::plugin { 'git': }
+  jenkins::plugin { 'instant-messaging': }
+  jenkins::plugin { 'jabber': }
+  jenkins::plugin { 'jobConfigHistory': }
+  jenkins::plugin { 'performance': }
   jenkins::plugin { 'phing': }
   jenkins::plugin { 'plot': }
   jenkins::plugin { 'pmd': }
-  jenkins::plugin { 'build-timeout': }
-  jenkins::plugin { 'claim': }
-  jenkins::plugin { 'disk-usage': }
-  jenkins::plugin { 'email-ext': }
-  jenkins::plugin { 'favorite': }
-  jenkins::plugin { 'git': }
-  jenkins::plugin { 'envinject': }
-  jenkins::plugin { 'jobConfigHistory': }
   jenkins::plugin { 'project-stats-plugin': }
   jenkins::plugin { 'seleniumhq': }
   jenkins::plugin { 'statusmonitor': }
-  jenkins::plugin { 'instant-messaging': }
-  jenkins::plugin { 'jabber': }
   jenkins::plugin { 'tasks': }
   jenkins::plugin { 'warnings': }
-  jenkins::plugin { 'greenballs': }
   jenkins::plugin { 'xvfb': }
-  jenkins::plugin { 'performance': }
 
   # install postfix to make it possible for jenkins to notify via mail
 
@@ -128,17 +133,6 @@ class jenkins::install {
     port => '80',
     dest => 'http://localhost:8080',
   }
-
-#  apache::vhost { 'drupal.127.0.0.1.xip.io':
-#    priority      => '30',
-#    port          => '80',
-#    docroot       => '/var/lib/jenkins/jobs/drupal-dr-dk/workspace/site',
-#    docroot_user  => 'jenkins',
-#    docroot_group => 'nogroup',
-#    ssl           => false,
-#    serveradmin   => 'root@dr.peytz.dk',
-#    override      => 'All',
-#  }
 
   # install mariadb and setup a database for jenkins to use
 
@@ -184,6 +178,77 @@ class jenkins::install {
   package { 'firefox':
     ensure  => present,
     require => Package['xvfb'],
+  }
+
+  # download and install jslint tools
+
+  exec { 'download-jslint4java':
+    command => 'wget -P /root https://jslint4java.googlecode.com/files/jslint4java-2.0.2-dist.zip',
+    creates => '/root/jslint4java-2.0.2-dist.zip',
+  }
+
+  exec { 'install-jslint4java':
+    command => 'unzip -q jslint4java-2.0.2-dist.zip && mv jslint4java-2.0.2 /opt && chmod 755 /opt/jslint4java-2.0.2',
+    cwd     => '/root',
+    creates => '/opt/jslint4java-2.0.2',
+    require => Exec['download-jslint4java'],
+  }
+
+  file { '/opt/jslint':
+    ensure => directory,
+  }
+
+  exec { 'download-fulljslint':
+    command => 'wget https://raw.github.com/mikewest/JSLint/master/fulljslint.js',
+    cwd     => '/opt/jslint',
+    creates => '/opt/jslint/fulljslint.js',
+    require => File['/opt/jslint'],
+  }
+
+  # download and install rhino
+
+  exec { 'download-rhino':
+    command => 'wget -P /root http://ftp.mozilla.org/pub/mozilla.org/js/rhino1_7R3.zip',
+    creates => '/root/rhino1_7R3.zip',
+  }
+
+  exec { 'install-rhino':
+    command => 'unzip -q rhino1_7R3.zip && mv rhino1_7R3 /opt',
+    cwd     => '/root',
+    creates => '/opt/rhino1_7R3',
+    require => Exec['download-rhino'],
+  }
+
+  file { '/opt/csslint':
+    ensure => directory,
+  }
+
+  exec { 'download-csslint':
+    command => 'wget https://raw.github.com/stubbornella/csslint/master/release/csslint-rhino.js',
+    cwd     => '/opt/csslint',
+    creates => '/opt/csslint/csslint-rhino.js',
+    require => File['/opt/csslint'],
+  }
+
+  # download and install phing phploc integration
+
+  file { '/opt/phploctask':
+    ensure => directory,
+  }
+
+  exec { 'download-phploctask':
+    command => 'wget https://raw.github.com/raphaelstolt/phploc-phing/master/PHPLocTask.php',
+    cwd     => '/opt/phploctask',
+    creates => '/opt/phploctask/PHPLocTask.php',
+    require => File['/opt/phploctask'],
+  }
+
+  # download drupal codesniffer rules
+
+  exec { 'install-drupalcs':
+    command => 'wget http://ftp.drupal.org/files/projects/drupalcs-7.x-1.0.tar.gz && tar xzf drupalcs-7.x-1.0.tar.gz && rm drupalcs-7.x-1.0.tar.gz',
+    cwd     => '/opt',
+    creates => '/opt/drupalcs/Drupal/ruleset.xml',
   }
 }
 

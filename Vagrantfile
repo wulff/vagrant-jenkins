@@ -10,6 +10,9 @@ Vagrant::Config.run do |config|
   # attach network adapters
   config.vm.network :hostonly, '33.33.33.10', {:adapter => 2}
 
+  # jenkins likes memory
+  config.vm.customize ['modifyvm', :id, '--memory', 1024, '--name', 'Vagrant Jenkins']
+
   # use puppet to provision packages
   config.vm.provision :puppet do |puppet|
     puppet.manifests_path = 'puppet/manifests'
