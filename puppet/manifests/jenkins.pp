@@ -79,6 +79,9 @@ class jenkins::install {
   jenkins::job { 'drupal-template':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
   }
+  jenkins::job { 'drupal-module-template':
+    repository => 'git://github.com/wulff/jenkins-drupal-module-template.git',
+  }
   jenkins::job { 'selenium-template':
     repository => 'git://github.com/wulff/jenkins-selenium-template.git',
   }
@@ -86,10 +89,15 @@ class jenkins::install {
     repository => 'git://github.com/wulff/jenkins-jmeter-template.git',
   }
 
+  jenkins::plugin { 'analysis-collector': }
   jenkins::plugin { 'analysis-core': }
+  jenkins::plugin { 'ansicolor': }
   jenkins::plugin { 'build-timeout': }
   jenkins::plugin { 'checkstyle': }
   jenkins::plugin { 'claim': }
+  jenkins::plugin { 'compact-columns': }
+  jenkins::plugin { 'console-column-plugin': }
+  jenkins::plugin { 'dashboard-view': }
   jenkins::plugin { 'disk-usage': }
   jenkins::plugin { 'dry': }
   jenkins::plugin { 'email-ext': }
@@ -98,7 +106,9 @@ class jenkins::install {
   jenkins::plugin { 'git': }
   jenkins::plugin { 'instant-messaging': }
   jenkins::plugin { 'jabber': }
+  jenkins::plugin { 'jenkinswalldisplay': }
   jenkins::plugin { 'jobConfigHistory': }
+  jenkins::plugin { 'log-parser': }
   jenkins::plugin { 'performance': }
   jenkins::plugin { 'phing': }
   jenkins::plugin { 'plot': }
@@ -107,6 +117,7 @@ class jenkins::install {
   jenkins::plugin { 'seleniumhq': }
   jenkins::plugin { 'statusmonitor': }
   jenkins::plugin { 'tasks': }
+  jenkins::plugin { 'token-macro': }
   jenkins::plugin { 'warnings': }
   jenkins::plugin { 'xvfb': }
 
@@ -178,6 +189,14 @@ class jenkins::install {
   package { 'firefox':
     ensure  => present,
     require => Package['xvfb'],
+  }
+
+  # necessary hack to make sure selenium uses the firefox binary instead of the
+  # shell script to start the browser
+  file { '/usr/bin/firefox-bin':
+    ensure  => link,
+    target  => '/usr/lib/firefox/firefox',
+    require => Package['firefox'],
   }
 
   # download and install jslint tools
