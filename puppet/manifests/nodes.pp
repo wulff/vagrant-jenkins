@@ -211,31 +211,6 @@ node "phpqa.local" inherits "jenkins-slave" {
   class { 'php::pear': } -> class { 'php::qatools': }
 
   # download and install jshint tools
-
-  exec { 'download-jslint4java':
-    command => 'wget -P /root https://jslint4java.googlecode.com/files/jslint4java-2.0.2-dist.zip',
-    creates => '/root/jslint4java-2.0.2-dist.zip',
-  }
-
-  exec { 'install-jslint4java':
-    command => 'unzip -q jslint4java-2.0.2-dist.zip && mv jslint4java-2.0.2 /opt && chmod 755 /opt/jslint4java-2.0.2',
-    cwd     => '/root',
-    creates => '/opt/jslint4java-2.0.2',
-    require => [Package['unzip'], Exec['download-jslint4java']],
-  }
-
-  file { '/opt/jslint':
-    ensure => directory,
-  }
-
-  exec { 'download-fulljslint':
-    command => 'wget https://raw.github.com/mikewest/JSLint/master/fulljslint.js',
-    cwd     => '/opt/jslint',
-    creates => '/opt/jslint/fulljslint.js',
-    require => File['/opt/jslint'],
-  }
-
-  ### TODO: use the following to replace jslint with jshint:
   
   package { 'npm':
     ensure => present,
