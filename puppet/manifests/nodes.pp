@@ -198,6 +198,10 @@ node "phpqa.local" inherits "jenkins-slave" {
     ensure => present,
   }
 
+  package { 'npm':
+    ensure => present,
+  }
+
   class { 'php': }
 
   package { 'php-apc': }
@@ -210,11 +214,7 @@ node "phpqa.local" inherits "jenkins-slave" {
   # TODO: https://github.com/sebastianbergmann/phpcpd/issues/57
   class { 'php::pear': } -> class { 'php::qatools': }
 
-  # download and install jshint tools
-  
-  package { 'npm':
-    ensure => present,
-  }
+  # install jshint
 
   exec { 'npm-install-jshint':
     command => 'npm install -g jshint',
@@ -223,30 +223,14 @@ node "phpqa.local" inherits "jenkins-slave" {
   }
   # TODO: add task for keeping jshint up-to-date
 
-  # download and install rhino
+  # install csslint
 
-  exec { 'download-rhino':
-    command => 'wget -P /root http://ftp.mozilla.org/pub/mozilla.org/js/rhino1_7R3.zip',
-    creates => '/root/rhino1_7R3.zip',
+  exec { 'npm-install-csslint':
+    command => 'npm install -g csslint',
+    creates => '/usr/local/bin/csslint',
+    require => Package['npm'],
   }
-
-  exec { 'install-rhino':
-    command => 'unzip -q rhino1_7R3.zip && mv rhino1_7R3 /opt',
-    cwd     => '/root',
-    creates => '/opt/rhino1_7R3',
-    require => [Package['unzip'], Exec['download-rhino']],
-  }
-
-  file { '/opt/csslint':
-    ensure => directory,
-  }
-
-  exec { 'download-csslint':
-    command => 'wget https://raw.github.com/stubbornella/csslint/master/release/csslint-rhino.js',
-    cwd     => '/opt/csslint',
-    creates => '/opt/csslint/csslint-rhino.js',
-    require => File['/opt/csslint'],
-  }
+  # TODO: add task for keeping jshint up-to-date
 
   # download and install phing phploc integration
 
