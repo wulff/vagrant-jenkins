@@ -7,5 +7,4 @@ class ntp {
     ensure => running,
     require => Package['ntp'],
   }
-  
 }
