@@ -18,3 +18,10 @@ Getting started
 When the virtual machine has booted, you can access the Jenkins instance at the following URL:
 
     http://jenkins.33.33.33.10.xip.io/
+
+
+Further reading
+---------------
+
+* http://www.mabishu.com/blog/2012/04/17/setting-up-jenkins-in-ubuntu-precise-12-04-for-php-projects/
+* http://david.ragingnexus.com/blog/2012/04/26/notes-php-qa-tools-jenkins-php-project-template/
