@@ -1,43 +1,3 @@
-# basic site manifest
-
-# define global paths and file ownership
-Exec { path => '/usr/sbin/:/sbin:/usr/bin:/bin' }
-File { owner => 'root', group => 'root' }
-
-# create a stage to make sure apt-get update is run before all other tasks
-stage { 'requirements': before => Stage['main'] }
-stage { 'bootstrap': before => Stage['requirements'] }
-
-class jenkins::bootstrap {
-  # we need an updated list of sources before we can apply the configuration
-	exec { 'jenkins_apt_update':
-		command => '/usr/bin/apt-get update',
-	}
-}
-
-class jenkins::requirements {
-  # install git-core and add some useful aliases
-  class { 'git': }
-
-  package { 'unzip': }
-
-  apt::source { 'jenkins':
-    location    => 'http://pkg.jenkins-ci.org/debian',
-    release     => '',
-    repos       => 'binary/',
-    key         => 'D50582E6',
-    key_server  => 'http://pkg.jenkins-ci.org/debian/jenkins-ci.org.key',
-    include_src => false,
-  }
-
-  apt::source { 'mariadb':
-    location    => 'http://ftp.osuosl.org/pub/mariadb/repo/5.5/ubuntu',
-    release     => 'precise',
-    repos       => 'main',
-    key         => '1BB943DB',
-    include_src => true,
-  }
-}
 
 class jenkins::install {
 
@@ -72,78 +32,7 @@ class jenkins::install {
     require => File['/usr/share/drush/commands'],
   }
 
-  # install and configure jenkins
 
-  class { 'jenkins': }
-
-  jenkins::job { 'drupal-template':
-    repository => 'git://github.com/wulff/jenkins-drupal-template.git',
-  }
-  jenkins::job { 'drupal-module-template':
-    repository => 'git://github.com/wulff/jenkins-drupal-module-template.git',
-  }
-  jenkins::job { 'selenium-template':
-    repository => 'git://github.com/wulff/jenkins-selenium-template.git',
-  }
-  jenkins::job { 'jmeter-template':
-    repository => 'git://github.com/wulff/jenkins-jmeter-template.git',
-  }
-
-  jenkins::plugin { 'analysis-collector': }
-  jenkins::plugin { 'analysis-core': }
-  jenkins::plugin { 'ansicolor': }
-  jenkins::plugin { 'build-timeout': }
-  jenkins::plugin { 'checkstyle': }
-  jenkins::plugin { 'claim': }
-  jenkins::plugin { 'compact-columns': }
-  jenkins::plugin { 'console-column-plugin': }
-  jenkins::plugin { 'dashboard-view': }
-  jenkins::plugin { 'disk-usage': }
-  jenkins::plugin { 'dry': }
-  jenkins::plugin { 'email-ext': }
-  jenkins::plugin { 'envinject': }
-  jenkins::plugin { 'favorite': }
-  jenkins::plugin { 'git': }
-  jenkins::plugin { 'instant-messaging': }
-  jenkins::plugin { 'jabber': }
-  jenkins::plugin { 'jenkinswalldisplay': }
-  jenkins::plugin { 'jobConfigHistory': }
-  jenkins::plugin { 'log-parser': }
-  jenkins::plugin { 'performance': }
-  jenkins::plugin { 'phing': }
-  jenkins::plugin { 'plot': }
-  jenkins::plugin { 'pmd': }
-  jenkins::plugin { 'project-stats-plugin': }
-  jenkins::plugin { 'seleniumhq': }
-  jenkins::plugin { 'statusmonitor': }
-  jenkins::plugin { 'tasks': }
-  jenkins::plugin { 'token-macro': }
-  jenkins::plugin { 'warnings': }
-  jenkins::plugin { 'xvfb': }
-
-  # install postfix to make it possible for jenkins to notify via mail
-
-  package { 'postfix':
-    ensure => present,
-  }
-
-  service { 'postfix':
-    ensure  => running,
-    require => Package['postfix'],
-  }
-
-  # install apache and add a proxy for jenkins
-
-  class { 'apache': }
-  class { 'apache::mod::proxy': }
-
-  apache::mod { 'php5': }
-  apache::mod { 'rewrite': }
-
-  apache::vhost::proxy { 'jenkins.33.33.33.10.xip.io':
-    port => '80',
-    dest => 'http://localhost:8080',
-  }
 
   # install mariadb and setup a database for jenkins to use
 
@@ -270,18 +159,3 @@ class jenkins::install {
     creates => '/opt/drupalcs/Drupal/ruleset.xml',
   }
 }
-
-class jenkins::go {
-  class { 'jenkins::bootstrap':
-    stage => 'bootstrap',
-  }
-  class { 'apt':
-    stage => 'requirements',
-  }
-  class { 'jenkins::requirements':
-    stage => 'requirements',
-  }
-  class { 'jenkins::install': }
-}
-
-include jenkins::go
