@@ -221,7 +221,11 @@ node "phpqa.local" inherits "jenkins-slave" {
     creates => '/usr/local/bin/jshint',
     require => Package['npm'],
   }
-  # TODO: add task for keeping jshint up-to-date
+
+  exec { 'npm-update-jshint':
+    command => 'npm update -g jshint',
+    require => Exec['npm-install-jshint'],
+  }
 
   # install csslint
 
@@ -230,7 +234,11 @@ node "phpqa.local" inherits "jenkins-slave" {
     creates => '/usr/local/bin/csslint',
     require => Package['npm'],
   }
-  # TODO: add task for keeping jshint up-to-date
+
+  exec { 'npm-update-csslint':
+    command => 'npm update -g csslint',
+    require => Exec['npm-install-csslint'],
+  }
 
   # download and install phing phploc integration
 
