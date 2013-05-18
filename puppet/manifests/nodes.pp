@@ -14,6 +14,14 @@ node "basenode" {
   class { 'ntp':
     stage => 'requirements',
   }
+
+  package { 'htop':
+    ensure => present,
+  }
+
+  package { 'ncdu':
+    ensure => present,
+  }
 }
 
 node "jenkins-master" inherits "basenode" {
@@ -54,6 +62,7 @@ node "jenkins-master" inherits "basenode" {
   jenkins::plugin { 'project-stats-plugin': }
   jenkins::plugin { 'tasks': }
   jenkins::plugin { 'token-macro': }
+  jenkins::plugin { 'view-job-filters': }
   jenkins::plugin { 'warnings': }
 
   class { 'jenkins::config':
@@ -69,18 +78,20 @@ node "jenkins-master" inherits "basenode" {
         privatekey => '/var/lib/jenkins/.ssh/id_rsa',
         executors => 2,
       },
+      # {
+      #   name => 'drupal.peytz.dk',
+      #   description => 'A slave optimized for running Drupal simpletests.',
+      #   labels => 'drupal',
+      #   host => '33.33.33.12',
+      #   port => '22',
+      #   path => '/home/jenkins/ci',
+      #   username => 'jenkins',
+      #   privatekey => '/var/lib/jenkins/.ssh/id_rsa',
+      #   executors => 2,
+      # },
     ],
     notify => Service['jenkins'],
   }
-
-#  user { 'jenkins':
-#    name => 'jenkins',
-#    home => '/var/lib/jenkins',
-#    shell => '/bin/bash',
-#    managehome => false,
-#    ensure => present,
-#    require => Package['jenkins],
-#  }
 
   file { '/var/lib/jenkins/.ssh':
     ensure => directory,
@@ -148,10 +159,6 @@ node "jenkins-slave" inherits "basenode" {
     group => 'jenkins',
     require => User['jenkins'],
   }
-
-  # exec { 'jenkins-update-password':
-  #   command => 'echo -e "jenkins\njenkins" | passwd jenkins',
-  # }
 
 }
 
@@ -267,3 +274,6 @@ node "phpqa.local" inherits "jenkins-slave" {
   }
 
 }
+
+# node "drupal.local" inherits "jenkins-slave" {
+# }
