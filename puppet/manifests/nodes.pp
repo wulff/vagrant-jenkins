@@ -263,7 +263,7 @@ node "phpqa.local" inherits "jenkins-slave" {
   file { '/usr/share/php/PHP/CodeSniffer/Standards/Drupal':
     ensure => link,
     target => '/opt/coder/coder_sniffer/Drupal',
-    require => Exec['install-drupal-coder'],
+    require => [Exec['install-drupal-coder'], Class['php::qatools']],
   }
 
 }
