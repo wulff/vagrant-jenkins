@@ -31,4 +31,14 @@ Vagrant::Config.run do |config|
     # jenkins likes memory
     phpqa.vm.customize ['modifyvm', :id, '--memory', 512, '--name', 'Vagrant Jenkins - PHP QA']
   end
+
+  # setup drupal simpletest node
+  config.vm.define :drupal do |drupal|
+    # configure network
+    drupal.vm.host_name = 'drupal.local'
+    drupal.vm.network :hostonly, '33.33.33.12', {:adapter => 2}
+
+    # jenkins likes memory
+    drupal.vm.customize ['modifyvm', :id, '--memory', 512, '--name', 'Vagrant Jenkins - Drupal Simpletest']
+  end
 end
