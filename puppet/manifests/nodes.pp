@@ -22,6 +22,12 @@ node "basenode" {
   package { 'ncdu':
     ensure => present,
   }
+
+  # TODO: use puppet munin module
+  # package { 'munin-node':
+  #   ensure => present,
+  # }
+
 }
 
 node "jenkins-master" inherits "basenode" {
@@ -78,17 +84,17 @@ node "jenkins-master" inherits "basenode" {
         privatekey => '/var/lib/jenkins/.ssh/id_rsa',
         executors => 2,
       },
-      # {
-      #   name => 'drupal.peytz.dk',
-      #   description => 'A slave optimized for running Drupal simpletests.',
-      #   labels => 'drupal',
-      #   host => '33.33.33.12',
-      #   port => '22',
-      #   path => '/home/jenkins/ci',
-      #   username => 'jenkins',
-      #   privatekey => '/var/lib/jenkins/.ssh/id_rsa',
-      #   executors => 2,
-      # },
+      {
+        name => 'drupal.peytz.dk',
+        description => 'A slave optimized for running Drupal simpletests.',
+        labels => 'drupal',
+        host => '33.33.33.12',
+        port => '22',
+        path => '/home/jenkins/ci',
+        username => 'jenkins',
+        privatekey => '/var/lib/jenkins/.ssh/id_rsa',
+        executors => 2,
+      },
     ],
     notify => Service['jenkins'],
   }
@@ -175,7 +181,7 @@ node "master.local" inherits "jenkins-master" {
     require => Package['postfix'],
   }
 
-  # install apache and add a proxy for jenkins
+  # use apache as a proxy for jenkins
 
   class { 'apache': }
   class { 'apache::mod::proxy': }
@@ -275,5 +281,40 @@ node "phpqa.local" inherits "jenkins-slave" {
 
 }
 
-# node "drupal.local" inherits "jenkins-slave" {
-# }
+node "drupal.local" inherits "jenkins-slave" {
+
+  class { 'jenkins::requirements':
+    stage => 'requirements',
+  }
+
+  # configure a php-enabled apache server
+
+  class { 'apache': }
+  class { 'php': }
+  apache::mod { 'php5': }
+  apache::mod { 'rewrite': }
+  apache::mod { 'vhost_alias': }
+
+  class { 'ci::vhosts': }
+
+  # TODO: Add dynamic vhost for /home/jenkins/ci/<jobname>/workspace
+  #       http://httpd.apache.org/docs/2.2/vhosts/mass.html
+
+  php::module { 'mysqlnd':
+    restart => Service['apache2'],
+    require => Class['mysql::server'],
+  }
+
+  # install the database server
+
+  class { 'mysql::server':
+    # FIXME: this doesn't seem to work with the latest 12.04 LTS
+    #        see https://lists.launchpad.net/maria-discuss/msg00698.html
+    # use the mysql module to install the mariadb packages
+    # package_name     => 'mariadb-server',
+    config_hash      => { 'root_password' => 'root' },
+    # necessary because /sbin/status doesn't know about mysql on ubuntu
+    service_provider => 'debian',
+  }
+
+}
