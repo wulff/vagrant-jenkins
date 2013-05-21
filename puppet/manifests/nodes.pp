@@ -198,8 +198,8 @@ node "master.local" inherits "jenkins-master" {
   jenkins::job { 'template-drupal-profile':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
   }
-  jenkins::job { 'template-drupal-module':
-    repository => 'git://github.com/wulff/jenkins-drupal-module-template.git',
+  jenkins::job { 'template-drupal-static-analysis':
+    repository => 'git://github.com/wulff/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
   }
 
@@ -254,6 +254,7 @@ node "phpqa.local" inherits "jenkins-slave" {
   }
 
   # download and install phing phploc integration
+  # TODO: test whether the phploc task included with phing works as intended
 
   file { '/opt/phploctask':
     ensure => directory,
@@ -272,6 +273,8 @@ node "phpqa.local" inherits "jenkins-slave" {
     command => 'git clone --branch 7.x-2.x http://git.drupal.org/project/coder.git /opt/coder',
     creates => '/opt/coder/coder_sniffer/Drupal/ruleset.xml',
   }
+
+  # TODO: add a git pull to make sure the ruleset is up to date
 
   file { '/usr/share/php/PHP/CodeSniffer/Standards/Drupal':
     ensure => link,
@@ -295,6 +298,10 @@ node "drupal.local" inherits "jenkins-slave" {
   apache::mod { 'rewrite': }
   apache::mod { 'vhost_alias': }
 
+  php::pear::package { 'phing':
+    repository => 'pear.phing.info',
+  }
+
   class { 'ci::vhosts': }
 
   # TODO: Add dynamic vhost for /home/jenkins/ci/<jobname>/workspace
@@ -315,6 +322,20 @@ node "drupal.local" inherits "jenkins-slave" {
     config_hash      => { 'root_password' => 'root' },
     # necessary because /sbin/status doesn't know about mysql on ubuntu
     service_provider => 'debian',
+  }
+
+  # add a drush task to phing
+
+  file { '/usr/share/php/phing/tasks/drupal':
+    ensure  => directory,
+    require => Package["pear-pear.phing.info-phing"],
+  }
+
+  exec { 'download-phing-drush-task':
+    command => 'wget https://raw.github.com/kasperg/phing-drush-task/master/DrushTask.php',
+    cwd     => '/usr/share/php/phing/tasks/drupal',
+    creates => '/usr/share/php/phing/tasks/drupal/DrushTask.php',
+    require => File['/usr/share/php/phing/tasks/drupal'],
   }
 
 }
