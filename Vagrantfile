@@ -1,4 +1,4 @@
-Vagrant::Config.run do |config|
+Vagrant::configure('2') do |config|
   # the base box this environment is built off of
   config.vm.box = 'precise32'
 
@@ -15,30 +15,48 @@ Vagrant::Config.run do |config|
   # setup master node
   config.vm.define :master, {:primary => true} do |master|
     # configure network
-    master.vm.host_name = 'master.local'
-    master.vm.network :hostonly, '33.33.33.10', {:adapter => 2}
+    master.vm.hostname = 'master.local'
+    master.vm.network :private_network, ip: '33.33.33.10'
 
-    # jenkins likes memory
-    master.vm.customize ['modifyvm', :id, '--memory', 512, '--name', 'Vagrant Jenkins - Master']
+    config.vm.provider 'virtualbox' do |v|
+      v.name = 'Vagrant Jenkins - Master'
+      v.customize ['modifyvm', :id, '--memory', 512]
+    end
   end
 
   # setup static phpqa node
-  config.vm.define :phpqa, {:primary => true} do |phpqa|
+  config.vm.define :phpqa do |phpqa|
     # configure network
-    phpqa.vm.host_name = 'phpqa.local'
-    phpqa.vm.network :hostonly, '33.33.33.11', {:adapter => 2}
+    phpqa.vm.hostname = 'phpqa.local'
+    phpqa.vm.network :private_network, ip: '33.33.33.11'
 
-    # jenkins likes memory
-    phpqa.vm.customize ['modifyvm', :id, '--memory', 512, '--name', 'Vagrant Jenkins - PHP QA']
+    config.vm.provider 'virtualbox' do |v|
+      v.name = 'Vagrant Jenkins - PHP QA'
+      v.customize ['modifyvm', :id, '--memory', 512]
+    end
   end
 
   # setup drupal simpletest node
-  config.vm.define :drupal do |drupal|
-    # configure network
-    drupal.vm.host_name = 'drupal.local'
-    drupal.vm.network :hostonly, '33.33.33.12', {:adapter => 2}
+  # config.vm.define :drupal do |drupal|
+  #   # configure network
+  #   drupal.vm.hostname = 'drupal.local'
+  #   drupal.vm.network :private_network, ip: '33.33.33.12'
+  #
+  #   config.vm.provider 'virtualbox' do |v|
+  #     v.name = 'Vagrant Jenkins - Drupal Simpletest'
+  #     v.customize ['modifyvm', :id, '--memory', 512]
+  #   end
+  # end
 
-    # jenkins likes memory
-    drupal.vm.customize ['modifyvm', :id, '--memory', 512, '--name', 'Vagrant Jenkins - Drupal Simpletest']
+  # setup selenium node
+  config.vm.define :selenium do |selenium|
+    # configure network
+    selenium.vm.hostname = 'selenium.local'
+    selenium.vm.network :private_network, ip: '33.33.33.13'
+
+    config.vm.provider 'virtualbox' do |v|
+      v.name = 'Vagrant Jenkins - Selenium'
+      v.customize ['modifyvm', :id, '--memory', 512]
+    end
   end
 end
