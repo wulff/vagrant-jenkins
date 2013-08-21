@@ -22,12 +22,6 @@ node "basenode" {
   package { 'ncdu':
     ensure => present,
   }
-
-  # TODO: use puppet munin module
-  # package { 'munin-node':
-  #   ensure => present,
-  # }
-
 }
 
 node "jenkins-master" inherits "basenode" {
@@ -66,10 +60,12 @@ node "jenkins-master" inherits "basenode" {
   jenkins::plugin { 'plot': }
   jenkins::plugin { 'pmd': }
   jenkins::plugin { 'project-stats-plugin': }
+#  jenkins::plugin { 'selenium': } # TODO: use this when it becomes stable
   jenkins::plugin { 'tasks': }
   jenkins::plugin { 'token-macro': }
   jenkins::plugin { 'view-job-filters': }
   jenkins::plugin { 'warnings': }
+  jenkins::plugin { 'xvfb': }
 
   class { 'jenkins::config':
     slaves => [
@@ -95,8 +91,24 @@ node "jenkins-master" inherits "basenode" {
         privatekey => '/var/lib/jenkins/.ssh/id_rsa',
         executors => 2,
       },
+      {
+        name => 'selenium.peytz.dk',
+        description => 'A slave optimized for running Selenium-based tests.',
+        labels => 'selenium',
+        host => '33.33.33.13',
+        port => '22',
+        path => '/home/jenkins/ci',
+        username => 'jenkins',
+        privatekey => '/var/lib/jenkins/.ssh/id_rsa',
+        executors => 2,
+      },
     ],
     notify => Service['jenkins'],
+  }
+
+  # this is necessary to render graphs
+  package { 'ttf-dejavu':
+    ensure => present,
   }
 
   file { '/var/lib/jenkins/.ssh':
@@ -170,6 +182,12 @@ node "jenkins-slave" inherits "basenode" {
 
 node "master.local" inherits "jenkins-master" {
 
+  # this is necessary to make it possible to configure jobs using xvfb
+
+  package { 'xvfb':
+    ensure => present,
+  }
+
   # install postfix to make it possible for jenkins to notify via mail
 
   package { 'postfix':
@@ -195,14 +213,17 @@ node "master.local" inherits "jenkins-master" {
 
   # install various job templates
 
-  jenkins::job { 'template-drupal-profile':
+  jenkins::job { 'template-drupal-simpletest':
     repository => 'git://github.com/wulff/jenkins-drupal-template.git',
   }
   jenkins::job { 'template-drupal-static-analysis':
     repository => 'git://github.com/wulff/jenkins-template-drupal-static-analysis.git',
     branch => 'develop',
   }
-
+  jenkins::job { 'template-selenium':
+    repository => 'git://github.com/wulff/jenkins-template-selenium.git',
+    branch => 'develop',
+  }
 }
 
 node "phpqa.local" inherits "jenkins-slave" {
@@ -338,4 +359,29 @@ node "drupal.local" inherits "jenkins-slave" {
     require => File['/usr/share/php/phing/tasks/drupal'],
   }
 
+}
+
+node "selenium.local" inherits "jenkins-slave" {
+  class { 'selenium': }
+
+  package { 'firefox':
+    ensure  => present,
+    require => Package['xvfb'],
+  }
+
+#  package { 'chromium-browser':
+#     ensure  => present,
+#     require => Package['xvfb'],
+#  }
+
+  class { 'php': }
+  php::module { 'curl': }
+  class { 'php::pear': } -> php::pear::package { 'phpunit':
+    repository => 'pear.phpunit.de',
+  }
+
+  exec { 'install-php-webdriver':
+    command => 'git clone https://github.com/facebook/php-webdriver.git /opt/php-webdriver',
+    creates => '/opt/php-webdriver/lib/WebDriver.php',
+  }
 }
