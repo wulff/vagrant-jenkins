@@ -180,7 +180,7 @@ node "jenkins-slave" inherits "basenode" {
 
 }
 
-node "master.local" inherits "jenkins-master" {
+node "master" inherits "jenkins-master" {
 
   # this is necessary to make it possible to configure jobs using xvfb
 
@@ -226,7 +226,7 @@ node "master.local" inherits "jenkins-master" {
   }
 }
 
-node "phpqa.local" inherits "jenkins-slave" {
+node "phpqa" inherits "jenkins-slave" {
 
   package { 'unzip':
     ensure => present,
@@ -305,7 +305,7 @@ node "phpqa.local" inherits "jenkins-slave" {
 
 }
 
-node "drupal.local" inherits "jenkins-slave" {
+node "drupal" inherits "jenkins-slave" {
 
   class { 'jenkins::requirements':
     stage => 'requirements',
@@ -361,7 +361,7 @@ node "drupal.local" inherits "jenkins-slave" {
 
 }
 
-node "selenium.local" inherits "jenkins-slave" {
+node "selenium" inherits "jenkins-slave" {
   class { 'selenium': }
 
   package { 'firefox':
